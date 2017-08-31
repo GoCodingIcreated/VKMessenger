@@ -39,7 +39,7 @@ class VK(object):
         password = data["password"]
         self.setUp(login, password)
         self.isAuth = True
-        self.hasInternet = False
+        self.hasInternet = True
 
     def setUp(self, login, password):
         self.vk_session = vk_api.VkApi(login, password)
@@ -88,11 +88,24 @@ class VK(object):
         print(dialogs)
         return dialogs
 
-    def getMessagesFromDialog(self, dialog, begin, end):
-        pass
+    def getMessagesFromDialog(self, dialog, begin = 0, end = 5):
+        if not self.hasInternet:
+            return None
+        if self.vk_session is None:
+            return None
+        messages = self.vk_session.get_api().messages\
+            .getHistory(count=end-begin,
+                        user_id=dialog["message"]["user_id"],
+                        rev=0,
+                        #start_message_id=0,
+                        #offset=0
+                        )
+        dumpData(messages)
+        return messages
 
-    def sendMessageToDialog(self, dialog):
-        pass
+    def sendMessageToDialog(self, dialog, text):
+        self.vk_session.get_api().messages.send(user_id=dialog["message"]["user_id"],
+                                                message=text)
 
     def getUserById(self, userId):
         userfile = USERFILE.replace("*", str(userId))
@@ -105,7 +118,7 @@ class VK(object):
             user = self.vk_session.get_api().users.get(user_ids=userId,
                                                        fields='photo_50,photo_100',
                                                        timeout=(5, 6))
-            dumpData(userfile)
+            dumpData(user, USERFILEPATH.replace("*", str(userId)))
         except requests.exceptions.ConnectionError as e:
             if userfile in os.listdir(USERFILESDIR):
                 return getDataFromJson(USERFILEPATH.replace("*", str(userId)))
@@ -129,6 +142,7 @@ class VK(object):
                 user = self.vk_session.get_api().users.get(
                     user_ids=self.getMyId(),
                     fields='photo_50,photo_100', timeout=(5, 6))
+                dumpData(user, MEPATH)
             except requests.exceptions.ConnectionError:
                 print("ConnectionError")
                 if MEFILE in os.listdir(USERFILESDIR):

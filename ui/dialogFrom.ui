@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>96</height>
+    <height>98</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -88,6 +88,9 @@
      </item>
      <item>
       <layout class="QVBoxLayout" name="verticalLayout">
+       <property name="spacing">
+        <number>2</number>
+       </property>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_4">
          <item>
@@ -111,7 +114,7 @@
             </size>
            </property>
            <property name="frameShape">
-            <enum>QFrame::Box</enum>
+            <enum>QFrame::NoFrame</enum>
            </property>
            <property name="text">
             <string>Николай Захаров</string>
@@ -133,7 +136,7 @@
             </size>
            </property>
            <property name="frameShape">
-            <enum>QFrame::Box</enum>
+            <enum>QFrame::NoFrame</enum>
            </property>
            <property name="text">
             <string>12:12:12 01.01.2011</string>
@@ -180,8 +183,11 @@
              <height>38</height>
             </size>
            </property>
+           <property name="inputMethodHints">
+            <set>Qt::ImhMultiLine</set>
+           </property>
            <property name="frameShape">
-            <enum>QFrame::Box</enum>
+            <enum>QFrame::NoFrame</enum>
            </property>
            <property name="text">
             <string/>
@@ -204,6 +210,13 @@
           </widget>
          </item>
         </layout>
+       </item>
+       <item>
+        <widget class="Line" name="line">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
        </item>
       </layout>
      </item>

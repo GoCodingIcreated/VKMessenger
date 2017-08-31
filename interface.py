@@ -1,4 +1,4 @@
-from PyQt5 import QtWidgets, QtCore, Qt
+from PyQt5 import QtWidgets, QtCore
 from PyQt5 import uic
 from PyQt5.QtWidgets import qApp
 from PyQt5.QtGui import QPixmap
@@ -10,12 +10,11 @@ import sys
 
 
 class MainWindow(QtWidgets.QMainWindow):
-    defaultUiFile = "ui/mainWindow.ui"
+    defaultUiFile = "ui/mainWindow_v2.ui"
 
     def __init__(self, uiFile=defaultUiFile, parent=None):
         QtWidgets.QWidget.__init__(self, parent)
         uic.loadUi(uiFile, self)
-
         slots = {"Exit": self.slotExit, "Log in" : self.slotLogIn, "Log out" : self.slotLogOut,
                     "Refresh" : self.slotRefresh, "Settings" : self.slotSettings}
         for action in self.menuMenu.actions():
@@ -24,7 +23,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.listWidget.itemClicked.connect(self.slotDialogSelected)
         #[(QtWidgets.QListWidgetItem)]
-
+        self.frame.hide()
+        self.min_width = self.minimumWidth()
+        self.max_width = self.maximumWidth()
+        self.min_height = self.minimumHeight()
+        self.max_height = self.maximumHeight()
+        self.setFixedWidth(self.min_width)
+        self.resize(self.maximumWidth(), self.height())
         self.VK = myvk.VK()
         self.me = None
         self.dialogs = None
@@ -114,8 +119,50 @@ class MainWindow(QtWidgets.QMainWindow):
         print("Slot dialog selected")
         dialogWidget = self.listWidget.itemWidget(item)
         id = dialogWidget.id
-        self.mw = MessangerWindow()
+        self.mw = MessengerWindow(dialogWidget.dialog, parent=self.frame)
+        self.frame.show()
         self.mw.show()
+
+        self.setFixedWidth(self.max_width)
+        self.resize(self.maximumWidth(), self.height())
+
+        self.mw.refreshButton.clicked.connect(self.slotDialogRefresh)
+        self.mw.backButton.clicked.connect(self.slotDialogBack)
+        self.mw.sendButton.clicked.connect(self.slotDialogSend)
+
+    @QtCore.pyqtSlot()
+    def slotDialogSend(self):
+        print("slot Dialog send")
+        self.VK.sendMessageToDialog(self.mw.dialog, self.mw.inputPText.toPlainText())
+        self.mw.inputPText.setPlainText("")
+        self.slotDialogRefresh()
+
+    @QtCore.pyqtSlot()
+    def slotDialogBack(self):
+        print("slot dialog back")
+        self.mw.hide()
+        self.frame.hide()
+        self.mw = None
+        self.setFixedWidth(self.min_width)
+        self.resize(self.minimumWidth(), self.height())
+
+    @QtCore.pyqtSlot()
+    def slotDialogRefresh(self):
+        print("slot Dialog Refresh")
+        messages = self.VK.getMessagesFromDialog(self.mw.dialog)
+        print(messages)
+        self.mw.listWidget.clear()
+        for message in messages["items"]:
+            #user_id = str(dialog["message"]["user_id"])
+            #user = self.VK.getUserById(user_id)
+            #dialogShort = self.setUpDialogWidget(dialog, user)
+            messageWidget = MessageWidget(self.mw.dialog, message)
+
+            item = QtWidgets.QListWidgetItem("", self.mw.listWidget)
+            item.setSizeHint(messageWidget.sizeHint())
+            self.mw.listWidget.setItemWidget(item, messageWidget)
+
+
 
 
 class DialogToWidget(QtWidgets.QWidget):
@@ -126,12 +173,14 @@ class DialogToWidget(QtWidgets.QWidget):
                  uiFile = defaultUiFile,
                  parent = None):
         QtWidgets.QWidget.__init__(self, parent)
+        self.dialog = dialog
         self.id = dialog["message"]["user_id"]
         uic.loadUi(uiFile, self)
         self.bodyLabel.setText(body)
         self.iconLabel.setPixmap(pixmapTo.scaledToHeight(64, 1))
         self.mIconLabel.setPixmap(pixmapFrom.scaledToHeight(38, 1))
-        if title == " ... ":
+        #if title == " ... ":
+        if not "chat_id" in dialog["message"]:
             self.titleLabel.setText(userName)
         else:
             self.titleLabel.setText(title)
@@ -146,10 +195,11 @@ class DialogFromWidget(QtWidgets.QWidget):
                  parent = None):
         QtWidgets.QWidget.__init__(self, parent)
         uic.loadUi(uiFile, self)
+        self.dialog = dialog
         self.id = dialog["message"]["user_id"]
         self.bodyLabel.setText(body)
         self.iconLabel.setPixmap(pixmap.scaledToHeight(64, 1))
-        if title == " ... ":
+        if not "chat_id" in dialog["message"]:
             self.titleLabel.setText(userName)
         else:
             self.titleLabel.setText(title)
@@ -158,17 +208,22 @@ class DialogFromWidget(QtWidgets.QWidget):
 class MessageWidget(QtWidgets.QWidget):
     defaultUiFile = "ui/message.ui"
 
-    def __init__(self, uiFile=defaultUiFile, parent=None):
+    def __init__(self, dialog, message, uiFile=defaultUiFile, parent=None):
         QtWidgets.QWidget.__init__(self, parent)
         uic.loadUi(uiFile, self)
+        self.message = message
+        self.nameLabel.setText(str(dialog["message"]["user_id"]))
+        #self.iconLabel.setPixmap()
+        self.bodyLabel.setText(message["body"])
 
 
-class MessangerWindow(QtWidgets.QWidget):
+class MessengerWindow(QtWidgets.QWidget):
     defaultUiFile = "ui/messenger.ui"
 
-    def __init__(self, uiFile=defaultUiFile, parent=None):
+    def __init__(self, dialog, uiFile=defaultUiFile, parent=None):
         QtWidgets.QWidget.__init__(self, parent)
         uic.loadUi(uiFile, self)
+        self.dialog = dialog
 
 
 
