@@ -109,16 +109,20 @@ class VK(object):
 
     def getUserById(self, userId):
         userfile = USERFILE.replace("*", str(userId))
-        if not self.hasInternet:
+        if self.hasInternet: # TODO: replace for NOT condition
             if userfile in os.listdir(USERFILESDIR):
+                print(os.path.getmtime(USERFILEPATH.replace("*", str(userId))))
                 return getDataFromJson(USERFILEPATH.replace("*", str(userId)))
             return dummyUser.getJson()
 
         try:
+            #if userfile in os.listdir(USERFILESDIR) and
+            #    os.path.getmtime(USERFILEPATH.replace("*", str(userId))) :
+
             user = self.vk_session.get_api().users.get(user_ids=userId,
                                                        fields='photo_50,photo_100',
                                                        timeout=(5, 6))
-            dumpData(user, USERFILEPATH.replace("*", str(userId)))
+            dumpData(user[0], USERFILEPATH.replace("*", str(userId)))
         except requests.exceptions.ConnectionError as e:
             if userfile in os.listdir(USERFILESDIR):
                 return getDataFromJson(USERFILEPATH.replace("*", str(userId)))
@@ -142,7 +146,8 @@ class VK(object):
                 user = self.vk_session.get_api().users.get(
                     user_ids=self.getMyId(),
                     fields='photo_50,photo_100', timeout=(5, 6))
-                dumpData(user, MEPATH)
+                dumpData(user[0], MEPATH)
+                dumpData(user[0], USERFILEPATH.replace("*", str(self.getMyId())))
             except requests.exceptions.ConnectionError:
                 print("ConnectionError")
                 if MEFILE in os.listdir(USERFILESDIR):

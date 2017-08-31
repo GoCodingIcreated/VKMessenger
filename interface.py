@@ -7,7 +7,8 @@ import requests
 
 import myvk
 import sys
-
+import time
+import datetime
 
 class MainWindow(QtWidgets.QMainWindow):
     defaultUiFile = "ui/mainWindow_v2.ui"
@@ -22,7 +23,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 action.triggered[(bool)].connect(slots[action.text()])
 
         self.listWidget.itemClicked.connect(self.slotDialogSelected)
-        #[(QtWidgets.QListWidgetItem)]
+
         self.frame.hide()
         self.min_width = self.minimumWidth()
         self.max_width = self.maximumWidth()
@@ -33,6 +34,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.VK = myvk.VK()
         self.me = None
         self.dialogs = None
+        self.mw = None
 
     @QtCore.pyqtSlot(bool)
     def slotExit(self, flag):
@@ -73,6 +75,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def setUpDialogWidget(self, dialog, user):
         user_name = user["first_name"] + " " + user["last_name"]
         pixmap = QPixmap()
+
         if user == myvk.dummyUser.getJson():
             pass
         else:
@@ -119,16 +122,28 @@ class MainWindow(QtWidgets.QMainWindow):
         print("Slot dialog selected")
         dialogWidget = self.listWidget.itemWidget(item)
         id = dialogWidget.id
-        self.mw = MessengerWindow(dialogWidget.dialog, parent=self.frame)
+        if self.mw is None:
+            self.mw = MessengerWindow(dialogWidget, parent=self.frame)
+            self.mw.refreshButton.clicked.connect(self.slotDialogRefresh)
+            self.mw.backButton.clicked.connect(self.slotDialogBack)
+            self.mw.sendButton.clicked.connect(self.slotDialogSend)
+            self.mw.getMoreButton.clicked.connect(self.slotDialogGetMore)
+        else:
+            self.mw.reload(dialogWidget)
         self.frame.show()
         self.mw.show()
 
         self.setFixedWidth(self.max_width)
         self.resize(self.maximumWidth(), self.height())
 
-        self.mw.refreshButton.clicked.connect(self.slotDialogRefresh)
-        self.mw.backButton.clicked.connect(self.slotDialogBack)
-        self.mw.sendButton.clicked.connect(self.slotDialogSend)
+
+        #self.slotDialogRefresh()
+
+    @QtCore.pyqtSlot()
+    def slotDialogGetMore(self):
+        end = len(self.mw.listWidget) + 5
+        begin = 0
+        self.slotDialogRefresh(begin, end)
 
     @QtCore.pyqtSlot()
     def slotDialogSend(self):
@@ -147,16 +162,27 @@ class MainWindow(QtWidgets.QMainWindow):
         self.resize(self.minimumWidth(), self.height())
 
     @QtCore.pyqtSlot()
-    def slotDialogRefresh(self):
+    def slotDialogRefresh(self, begin=0, end=5):
         print("slot Dialog Refresh")
-        messages = self.VK.getMessagesFromDialog(self.mw.dialog)
+        end = max(end, len(self.mw.listWidget))
+        messages = self.VK.getMessagesFromDialog(self.mw.dialogWidget.dialog, begin, end)
         print(messages)
         self.mw.listWidget.clear()
+        users = {}
         for message in messages["items"]:
-            #user_id = str(dialog["message"]["user_id"])
-            #user = self.VK.getUserById(user_id)
-            #dialogShort = self.setUpDialogWidget(dialog, user)
-            messageWidget = MessageWidget(self.mw.dialog, message)
+            if message["from_id"] not in users:
+                users[message["from_id"]] = self.VK.getUserById(message["from_id"])
+                if users[message["from_id"]] == myvk.dummyUser.getJson():
+                    pass
+                else:
+                    iconUrl = users[message["from_id"]]["photo_100"]
+                    req = requests.get(iconUrl, timeout=(5, 6))
+                    pixmap = QPixmap()
+                    pixmap.loadFromData(req.content)
+                    users[message["from_id"]]["pixmap"] = pixmap
+
+        for message in messages["items"]:
+            messageWidget = MessageWidget(self.mw.dialogWidget.dialog, message, users[message["from_id"]])
 
             item = QtWidgets.QListWidgetItem("", self.mw.listWidget)
             item.setSizeHint(messageWidget.sizeHint())
@@ -173,12 +199,18 @@ class DialogToWidget(QtWidgets.QWidget):
                  uiFile = defaultUiFile,
                  parent = None):
         QtWidgets.QWidget.__init__(self, parent)
+        uic.loadUi(uiFile, self)
+
         self.dialog = dialog
         self.id = dialog["message"]["user_id"]
-        uic.loadUi(uiFile, self)
+        curTime = int(dialog["message"]["date"])
+        curTime = datetime.datetime.fromtimestamp(curTime).strftime("%H:%M:%S")
+        self.timeLabel.setText(curTime)
+
         self.bodyLabel.setText(body)
-        self.iconLabel.setPixmap(pixmapTo.scaledToHeight(64, 1))
-        self.mIconLabel.setPixmap(pixmapFrom.scaledToHeight(38, 1))
+        self.iconLabel.setPixmap(pixmapTo.scaledToHeight(50, 1))
+        self.mIconLabel.setPixmap(pixmapFrom.scaledToHeight(25, 1))
+
         #if title == " ... ":
         if not "chat_id" in dialog["message"]:
             self.titleLabel.setText(userName)
@@ -195,10 +227,14 @@ class DialogFromWidget(QtWidgets.QWidget):
                  parent = None):
         QtWidgets.QWidget.__init__(self, parent)
         uic.loadUi(uiFile, self)
+
         self.dialog = dialog
+        curTime = int(dialog["message"]["date"])
+        curTime = datetime.datetime.fromtimestamp(curTime).strftime("%H:%M:%S")
+        self.timeLabel.setText(curTime)
         self.id = dialog["message"]["user_id"]
         self.bodyLabel.setText(body)
-        self.iconLabel.setPixmap(pixmap.scaledToHeight(64, 1))
+        self.iconLabel.setPixmap(pixmap.scaledToHeight(50, 1))
         if not "chat_id" in dialog["message"]:
             self.titleLabel.setText(userName)
         else:
@@ -208,22 +244,33 @@ class DialogFromWidget(QtWidgets.QWidget):
 class MessageWidget(QtWidgets.QWidget):
     defaultUiFile = "ui/message.ui"
 
-    def __init__(self, dialog, message, uiFile=defaultUiFile, parent=None):
+    def __init__(self, dialog, message, user, uiFile=defaultUiFile, parent=None):
         QtWidgets.QWidget.__init__(self, parent)
         uic.loadUi(uiFile, self)
+        curTime = int(message["date"])
+        curTime = datetime.datetime.fromtimestamp(curTime).strftime("%H:%M:%S")
+        self.timeLabel.setText(curTime)
         self.message = message
-        self.nameLabel.setText(str(dialog["message"]["user_id"]))
-        #self.iconLabel.setPixmap()
+        user_id = message["from_id"]
+
+        self.nameLabel.setText(user["first_name"] + user["last_name"])
+        self.iconLabel.setPixmap(user["pixmap"].scaledToHeight(32, 1))
         self.bodyLabel.setText(message["body"])
 
 
 class MessengerWindow(QtWidgets.QWidget):
     defaultUiFile = "ui/messenger.ui"
 
-    def __init__(self, dialog, uiFile=defaultUiFile, parent=None):
+    def __init__(self, dialogWidget, uiFile=defaultUiFile, parent=None):
         QtWidgets.QWidget.__init__(self, parent)
         uic.loadUi(uiFile, self)
-        self.dialog = dialog
+        self.dialogWidget = dialogWidget
+
+        self.iconLabel.setPixmap(dialogWidget.iconLabel.pixmap())
+
+    def reload(self, dialogWidget):
+        self.dialogWidget = dialogWidget
+        self.iconLabel.setPixmap(dialogWidget.iconLabel.pixmap())
 
 
 
