@@ -40,8 +40,6 @@ class MainWindow(QtWidgets.QMainWindow):
         except FileNotFoundError:
             self.slotSettings(True)
 
-
-
     @QtCore.pyqtSlot(bool)
     def slotExit(self, flag):
         print("Slot Exit " + str(flag))
@@ -114,7 +112,6 @@ class MainWindow(QtWidgets.QMainWindow):
     def slotLoginWindowCancel(self):
         print("Slot Login Window cancel ")
 
-
     @QtCore.pyqtSlot()
     def slotSettingsWindowOk(self):
         print("Slot settings window ok")
@@ -137,7 +134,8 @@ class MainWindow(QtWidgets.QMainWindow):
         dialogWidget = self.listWidget.itemWidget(item)
         id = dialogWidget.id
         if self.mw is None:
-            self.mw = MessengerWindow(dialogWidget, parent=self.frame)
+            self.mw = MessengerWindow(dialogWidget, self.me)
+            self.frameLayout.addWidget(self.mw)
             self.mw.refreshButton.clicked.connect(self.slotDialogRefresh)
             self.mw.backButton.clicked.connect(self.slotDialogBack)
             self.mw.sendButton.clicked.connect(self.slotDialogSend)
@@ -182,7 +180,7 @@ class MainWindow(QtWidgets.QMainWindow):
         messages = self.VK.getMessagesFromDialog(self.mw.dialogWidget.dialog, begin, end)
         print(messages)
         self.mw.listWidget.clear()
-        users = {}
+        users = {self.me.user["id"] : self.me.user}
         for message in messages["items"]:
             if message["from_id"] not in users:
                 users[message["from_id"]] = self.VK.getUserById(message["from_id"])
@@ -275,11 +273,11 @@ class MessageWidget(QtWidgets.QWidget):
 class MessengerWindow(QtWidgets.QWidget):
     defaultUiFile = "ui/messenger.ui"
 
-    def __init__(self, dialogWidget, uiFile=defaultUiFile, parent=None):
+    def __init__(self, dialogWidget, me, uiFile=defaultUiFile, parent=None):
         QtWidgets.QWidget.__init__(self, parent)
         uic.loadUi(uiFile, self)
         self.dialogWidget = dialogWidget
-
+        self.me = me
         self.iconLabel.setPixmap(dialogWidget.iconLabel.pixmap())
 
     def reload(self, dialogWidget):
@@ -311,6 +309,7 @@ class Myself(object):
     def __init__(self, user):
         self.user = user
         self.photo_100 = QPixmap()
+
         if user == myvk.dummyUser.getJson():
             pass
         else:
@@ -319,7 +318,7 @@ class Myself(object):
                 self.photo_100.loadFromData(req.content)
             except requests.exceptions.ConnectionError:
                 print("ConnectionError")
-
+        self.user["pixmap"] = self.photo_100
         print(user)
 
         self.id = user["id"]

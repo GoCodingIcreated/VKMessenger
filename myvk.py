@@ -137,25 +137,27 @@ class VK(object):
     def getMyId(self):
         if self.vk_session is not None:
             return self.vk_session.token["user_id"]
-        return dummyUser.getJson["id"]
+        return dummyUser.getJson()["id"]
 
     def getMe(self):
+        mepath = USERFILEPATH.replace("*", str(self.getMyId()))
+        mefile = USERFILE.replace("*", str(self.getMyId()))
         if not self.hasInternet:
-            if MEFILE in os.listdir(USERFILESDIR):
-                return getDataFromJson(MEPATH)
+            if mefile in os.listdir(USERFILESDIR):
+                return getDataFromJson(mefile)
             else:
                 return dummyUser.getJson()
         if self.vk_session is not None:
             try:
                 user = self.vk_session.get_api().users.get(
                     user_ids=self.getMyId(),
-                    fields='photo_50,photo_100', timeout=(5, 6))
-                dumpData(user[0], MEPATH)
-                dumpData(user[0], USERFILEPATH.replace("*", str(self.getMyId())))
+                    fields='photo_50,photo_100')
+
+                dumpData(user[0], mepath)
             except requests.exceptions.ConnectionError:
                 print("ConnectionError")
-                if MEFILE in os.listdir(USERFILESDIR):
-                    return getDataFromJson(MEPATH)
+                if mefile in os.listdir(USERFILESDIR):
+                    return getDataFromJson(mepath)
             if len(user) > 0:
                 return user[0]
 
