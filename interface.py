@@ -31,10 +31,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.max_height = self.maximumHeight()
         self.setFixedWidth(self.min_width)
         self.resize(self.maximumWidth(), self.height())
-        self.VK = myvk.VK()
+        self.VK = None
         self.me = None
         self.dialogs = None
         self.mw = None
+        try:
+            self.VK = myvk.VK()
+        except FileNotFoundError:
+            self.slotSettings(True)
+
+
 
     @QtCore.pyqtSlot(bool)
     def slotExit(self, flag):
@@ -95,12 +101,12 @@ class MainWindow(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot(bool)
     def slotSettings(self, bool):
         print("Slot Settings ")
-
         self.loginDialog = LoginWindow(self.slotSettingsWindowOk, self.slotSettingsWindowCancel)
 
     @QtCore.pyqtSlot()
     def slotLoginWindowOK(self):
         print("Slot Login Window OK ")
+
         self.VK.setUp(self.loginDialog.loginLE.text(), self.loginDialog.passwordLE.text())
         self.VK.doLogIn()
 
@@ -108,14 +114,22 @@ class MainWindow(QtWidgets.QMainWindow):
     def slotLoginWindowCancel(self):
         print("Slot Login Window cancel ")
 
+
     @QtCore.pyqtSlot()
     def slotSettingsWindowOk(self):
         print("Slot settings window ok")
+        if self.VK is None:
+            data = {"login" : self.loginDialog.loginLE.text(),
+                    "password" : self.loginDialog.passwordLE.text()}
+            myvk.dumpData(data, "json/data.json")
+            self.VK = myvk.VK()
         self.VK.setUp(self.loginDialog.loginLE.text(), self.loginDialog.passwordLE.text())
 
     @QtCore.pyqtSlot()
     def slotSettingsWindowCancel(self):
         print("Slot settings window cancel ")
+        if self.VK is None:
+            self.slotSettings(True)
 
     @QtCore.pyqtSlot(QtWidgets.QListWidgetItem)
     def slotDialogSelected(self, item):

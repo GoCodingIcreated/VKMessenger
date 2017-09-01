@@ -33,13 +33,17 @@ class VK(object):
     defaultDataFile = "json/data.json"
 
     def __init__(self, dataFile=defaultDataFile):
+
+        self.hasInternet = True
         with open(dataFile) as file:
            data = json.load(file)
         login = data["login"]
         password = data["password"]
         self.setUp(login, password)
         self.isAuth = True
-        self.hasInternet = True
+
+
+
 
     def setUp(self, login, password):
         self.vk_session = vk_api.VkApi(login, password)

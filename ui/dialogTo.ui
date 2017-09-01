@@ -42,7 +42,7 @@
     <number>1</number>
    </property>
    <property name="rightMargin">
-    <number>0</number>
+    <number>10</number>
    </property>
    <property name="bottomMargin">
     <number>1</number>
@@ -167,7 +167,7 @@
            </property>
            <property name="maximumSize">
             <size>
-             <width>240</width>
+             <width>320</width>
              <height>26</height>
             </size>
            </property>
