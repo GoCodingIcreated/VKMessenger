@@ -86,7 +86,6 @@ class MainWindow(QtWidgets.QMainWindow):
             iconUrl = user["photo_100"]
             req = requests.get(iconUrl, timeout=(5, 6))
             pixmap.loadFromData(req.content)
-
         body = dialog["message"]["body"]
         title = dialog["message"]["title"]
         if "random_id" in dialog["message"]:
@@ -160,7 +159,7 @@ class MainWindow(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot()
     def slotDialogSend(self):
         print("slot Dialog send")
-        self.VK.sendMessageToDialog(self.mw.dialog, self.mw.inputPText.toPlainText())
+        self.VK.sendMessageToDialog(self.mw.dialogWidget.dialog, self.mw.inputPText.toPlainText())
         self.mw.inputPText.setPlainText("")
         self.slotDialogRefresh()
 
@@ -219,6 +218,8 @@ class DialogToWidget(QtWidgets.QWidget):
         curTime = datetime.datetime.fromtimestamp(curTime).strftime("%H:%M:%S")
         self.timeLabel.setText(curTime)
 
+        if dialog["message"]["read_state"] == 0:
+           self.bodyLabel.setStyleSheet("QLabel { background-color : rgba(90, 90, 90, 45); }")
         self.bodyLabel.setText(body)
         self.iconLabel.setPixmap(pixmapTo.scaledToHeight(50, 1))
         self.mIconLabel.setPixmap(pixmapFrom.scaledToHeight(25, 1))
@@ -241,6 +242,12 @@ class DialogFromWidget(QtWidgets.QWidget):
         uic.loadUi(uiFile, self)
 
         self.dialog = dialog
+        if "unread" in dialog:
+            self.unreadLabel.setText(str(dialog["unread"]))
+            self.unreadLabel.setStyleSheet("QLabel { background-color : rgba(90, 90, 90, 45); }")
+            self.bodyLabel.setStyleSheet("QLabel { background-color : rgba(90, 90, 90, 45); }")
+        else:
+            self.unreadLabel.setText("")
         curTime = int(dialog["message"]["date"])
         curTime = datetime.datetime.fromtimestamp(curTime).strftime("%H:%M:%S")
         self.timeLabel.setText(curTime)
@@ -264,7 +271,8 @@ class MessageWidget(QtWidgets.QWidget):
         self.timeLabel.setText(curTime)
         self.message = message
         user_id = message["from_id"]
-
+        if message["read_state"] == 0:
+            self.bodyLabel.setStyleSheet("QLabel { background-color : rgba(90, 90, 90, 45); }")
         self.nameLabel.setText(user["first_name"] + user["last_name"])
         self.iconLabel.setPixmap(user["pixmap"].scaledToHeight(32, 1))
         self.bodyLabel.setText(message["body"])
