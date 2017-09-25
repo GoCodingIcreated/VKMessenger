@@ -92,14 +92,15 @@ class VK(object):
         print(dialogs)
         return dialogs
 
-    def getMessagesFromDialog(self, dialog, begin = 0, end = 5):
+    def getMessagesFromDialog(self, id, begin = 0, end = 5):
         if not self.hasInternet:
             return None
         if self.vk_session is None:
             return None
+
         messages = self.vk_session.get_api().messages\
             .getHistory(count=end-begin,
-                        user_id=dialog["message"]["user_id"],
+                        user_id=id,
                         rev=0,
                         #start_message_id=0,
                         #offset=0
@@ -107,13 +108,17 @@ class VK(object):
         dumpData(messages)
         return messages
 
-    def sendMessageToDialog(self, dialog, text):
-        self.vk_session.get_api().messages.send(user_id=dialog["message"]["user_id"],
+    def sendMessageToDialog(self, user_id, text):
+        self.vk_session.get_api().messages.send(user_id=user_id,
+                                                message=text)
+
+    def sendMessageToChat(self, chat_id, text):
+        self.vk_session.get_api().messages.send(chat_id=chat_id,
                                                 message=text)
 
     def getUserById(self, userId):
         userfile = USERFILE.replace("*", str(userId))
-        if self.hasInternet: # TODO: replace for NOT condition
+        if not self.hasInternet: # TODO: replace for NOT condition
             if userfile in os.listdir(USERFILESDIR):
                 print(os.path.getmtime(USERFILEPATH.replace("*", str(userId))))
                 return getDataFromJson(USERFILEPATH.replace("*", str(userId)))
@@ -137,25 +142,27 @@ class VK(object):
     def getMyId(self):
         if self.vk_session is not None:
             return self.vk_session.token["user_id"]
-        return dummyUser.getJson["id"]
+        return dummyUser.getJson()["id"]
 
     def getMe(self):
+        mepath = USERFILEPATH.replace("*", str(self.getMyId()))
+        mefile = USERFILE.replace("*", str(self.getMyId()))
         if not self.hasInternet:
-            if MEFILE in os.listdir(USERFILESDIR):
-                return getDataFromJson(MEPATH)
+            if mefile in os.listdir(USERFILESDIR):
+                return getDataFromJson(mefile)
             else:
                 return dummyUser.getJson()
         if self.vk_session is not None:
             try:
                 user = self.vk_session.get_api().users.get(
                     user_ids=self.getMyId(),
-                    fields='photo_50,photo_100', timeout=(5, 6))
-                dumpData(user[0], MEPATH)
-                dumpData(user[0], USERFILEPATH.replace("*", str(self.getMyId())))
+                    fields='photo_50,photo_100')
+
+                dumpData(user[0], mepath)
             except requests.exceptions.ConnectionError:
                 print("ConnectionError")
-                if MEFILE in os.listdir(USERFILESDIR):
-                    return getDataFromJson(MEPATH)
+                if mefile in os.listdir(USERFILESDIR):
+                    return getDataFromJson(mepath)
             if len(user) > 0:
                 return user[0]
 

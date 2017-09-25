@@ -31,6 +31,12 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
+  <property name="autoFillBackground">
+   <bool>false</bool>
+  </property>
+  <property name="styleSheet">
+   <string notr="true"/>
+  </property>
   <layout class="QHBoxLayout" name="horizontalLayout_2">
    <property name="spacing">
     <number>0</number>
@@ -59,13 +65,13 @@
       <number>0</number>
      </property>
      <property name="topMargin">
-      <number>0</number>
+      <number>1</number>
      </property>
      <property name="rightMargin">
       <number>0</number>
      </property>
      <property name="bottomMargin">
-      <number>3</number>
+      <number>2</number>
      </property>
      <item>
       <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -206,6 +212,9 @@
              <pointsize>10</pointsize>
             </font>
            </property>
+           <property name="autoFillBackground">
+            <bool>false</bool>
+           </property>
            <property name="frameShape">
             <enum>QFrame::NoFrame</enum>
            </property>
@@ -227,7 +236,7 @@
          <item>
           <widget class="QLabel" name="bodyLabel">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Maximum" vsizetype="Expanding">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
@@ -240,7 +249,7 @@
            </property>
            <property name="maximumSize">
             <size>
-             <width>326</width>
+             <width>500</width>
              <height>62</height>
             </size>
            </property>
@@ -249,6 +258,12 @@
              <pointsize>10</pointsize>
             </font>
            </property>
+           <property name="autoFillBackground">
+            <bool>false</bool>
+           </property>
+           <property name="styleSheet">
+            <string notr="true"/>
+           </property>
            <property name="inputMethodHints">
             <set>Qt::ImhMultiLine</set>
            </property>
@@ -256,7 +271,7 @@
             <enum>QFrame::NoFrame</enum>
            </property>
            <property name="text">
-            <string/>
+            <string>asdasd</string>
            </property>
            <property name="textFormat">
             <enum>Qt::AutoText</enum>
@@ -275,6 +290,48 @@
            </property>
            <property name="buddy">
             <cstring></cstring>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="unreadLabel">
+           <property name="minimumSize">
+            <size>
+             <width>34</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>100</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <weight>75</weight>
+             <italic>false</italic>
+             <bold>true</bold>
+             <underline>true</underline>
+             <strikeout>false</strikeout>
+             <stylestrategy>PreferDefault</stylestrategy>
+             <kerning>true</kerning>
+            </font>
+           </property>
+           <property name="frameShape">
+            <enum>QFrame::NoFrame</enum>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Raised</enum>
+           </property>
+           <property name="text">
+            <string>1</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignHCenter|Qt::AlignTop</set>
+           </property>
+           <property name="margin">
+            <number>5</number>
            </property>
           </widget>
          </item>
