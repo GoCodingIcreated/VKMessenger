@@ -273,7 +273,7 @@ class MessageWidget(QtWidgets.QWidget):
         user_id = message["from_id"]
         if message["read_state"] == 0:
             self.bodyLabel.setStyleSheet("QLabel { background-color : rgba(90, 90, 90, 45); }")
-        self.nameLabel.setText(user["first_name"] + user["last_name"])
+        self.nameLabel.setText(user["first_name"] + " " + user["last_name"])
         self.iconLabel.setPixmap(user["pixmap"].scaledToHeight(32, 1))
         self.bodyLabel.setText(message["body"])
 

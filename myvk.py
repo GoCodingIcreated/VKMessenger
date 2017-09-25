@@ -113,7 +113,7 @@ class VK(object):
 
     def getUserById(self, userId):
         userfile = USERFILE.replace("*", str(userId))
-        if self.hasInternet: # TODO: replace for NOT condition
+        if not self.hasInternet: # TODO: replace for NOT condition
             if userfile in os.listdir(USERFILESDIR):
                 print(os.path.getmtime(USERFILEPATH.replace("*", str(userId))))
                 return getDataFromJson(USERFILEPATH.replace("*", str(userId)))
