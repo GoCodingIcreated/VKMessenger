@@ -18,6 +18,8 @@ DIALOGSLISTPATH = DIALOGSDIR + DIALOGSLISTFILE
 
 def dumpData(data, filename=dumpFile):
     dump = json.dumps(data, indent=4, ensure_ascii=False)
+    if not os.path.exists(os.path.dirname(filename)):
+        os.mkdir(os.path.dirname(filename))
     with open(filename, "w") as file:
         print(dump, file=file)
     print("Dumped %s." % filename)
@@ -109,6 +111,7 @@ class VK(object):
         return messages
 
     def sendMessageToDialog(self, user_id, text):
+        print(text)
         self.vk_session.get_api().messages.send(user_id=user_id,
                                                 message=text)
 
