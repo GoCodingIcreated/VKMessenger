@@ -9,6 +9,7 @@ import myvk
 import sys
 import time
 import datetime
+import os
 
 class MainWindow(QtWidgets.QMainWindow):
     defaultUiFile = "ui/mainWindow_v2.ui"
@@ -141,6 +142,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.mw.backButton.clicked.connect(self.slotDialogBack)
             self.mw.sendButton.clicked.connect(self.slotDialogSend)
             self.mw.getMoreButton.clicked.connect(self.slotDialogGetMore)
+            self.mw.stickersButton.clicked.connect(self.slotDialogStickers)
         else:
             self.mw.reload(dialogWidget)
         self.frame.show()
@@ -205,6 +207,15 @@ class MainWindow(QtWidgets.QMainWindow):
             item = QtWidgets.QListWidgetItem("", self.mw.listWidget)
             item.setSizeHint(messageWidget.sizeHint())
             self.mw.listWidget.setItemWidget(item, messageWidget)
+
+    @QtCore.pyqtSlot()
+    def slotDialogStickers(self):
+        self.stickersList = StickersListWidget()
+        self.stickersList.show()
+
+    @QtCore.pyqtSlot()
+    def slotDialogStickerSend(self):
+        pass
 
 
 class DialogChatWidget(QtWidgets.QWidget):
@@ -354,6 +365,107 @@ class LoginWindow(QtWidgets.QDialog):
     @QtCore.pyqtSlot()
     def cancel(self):
         print("Cancel:" + self.loginLE.text() + ":" + self.passwordLE.text())
+
+
+class StickersListWidget(QtWidgets.QWidget):
+    defaultUiFile = "ui/stickers.ui"
+    defaultStickersDir = "stickers/"
+
+    def __init__(self, stickersDir=defaultStickersDir, uiFile = defaultUiFile, parent = None):
+        QtWidgets.QDialog.__init__(self, parent)
+        uic.loadUi(uiFile, self)
+
+        dirs = [dir for dir in os.listdir(stickersDir)
+                if os.path.isdir(os.path.join(stickersDir, dir))]
+
+        self.stickersByProduct = { dir : [] for dir in dirs }
+        self.stickersById = {}
+        print("Dirs:")
+        print(dirs)
+        for dir in dirs:
+            dirpath = os.path.join(stickersDir, dir)
+            path64 = os.path.join(dirpath, "64")
+            path128 = os.path.join(dirpath, "128")
+            for stickerName in os.listdir(path64):
+                sticker64 = os.path.join(path64, stickerName)
+                sticker128 = os.path.join(path128, stickerName)
+                stickerId = os.path.splitext(stickerName)[0]
+
+                sticker = Sticker(stickerId, dir, sticker64, sticker128)
+                self.stickersById[stickerId] =  sticker
+                self.stickersByProduct[dir].append(sticker)
+
+
+        print("StickerByProduct and ById:")
+        print(self.stickersByProduct)
+        print(self.stickersById)
+        count = 0
+        for stickersPackId in self.stickersByProduct:
+            count += 1
+            print("Sticker pack "  + str(count))
+
+
+            stickersTable = StickersTable()
+            stickersTable.addPack(self.stickersByProduct[stickersPackId])
+            self.tabWidget.addTab(stickersTable, str(count))
+
+
+class StickersTable(QtWidgets.QWidget):
+    defaultUiFile = "ui/stickersTable.ui"
+
+    def __init__(self, uiFile=defaultUiFile, parent=None):
+        QtWidgets.QWidget.__init__(self, parent)
+        uic.loadUi(uiFile, self)
+
+    def addPack(self, stickerPack):
+        self.tableWidget.setColumnCount(3)
+        if len(stickerPack) == 0:
+            self.tableWidget.setRowCount(0)
+            return
+
+        maxCols = 3
+        rows = 1 + (len(stickerPack) - 1) / maxCols
+        self.tableWidget.setRowCount(rows)
+
+        row = 0
+        col = 0
+        for sticker in stickerPack:
+            stickerWidget = StickerWidget(sticker)
+            print(str(row) + " " + str(col))
+            self.tableWidget.setCellWidget(row, col, stickerWidget)
+            col += 1
+            row += col // maxCols
+            col %= maxCols
+
+
+class Sticker(object):
+    def __init__(self, id, product_id, path64, path128):
+        self.pixmap64 =  QPixmap(path64)
+        self.pixmap128 = QPixmap(path128)
+        self.product_id = product_id
+        self.id = id
+
+    def getSmallIcon(self):
+        return self.pixmap64
+
+    def getIcon(self):
+        return self.pixmap128
+
+    def getId(self):
+        return self.id
+
+    def getProductId(self):
+        return self.product_id
+
+
+class StickerWidget(QtWidgets.QWidget):
+    defaultUiFile="ui/stickerWidget.ui"
+
+    def __init__(self, sticker, uiFile=defaultUiFile, parent=None):
+        QtWidgets.QWidget.__init__(self, parent)
+        uic.loadUi(uiFile, self)
+        self.sticker = sticker
+        self.label.setPixmap(sticker.getSmallIcon())
 
 
 class Myself(object):

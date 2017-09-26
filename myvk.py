@@ -110,14 +110,23 @@ class VK(object):
         dumpData(messages)
         return messages
 
-    def sendMessageToDialog(self, user_id, text):
-        print(text)
-        self.vk_session.get_api().messages.send(user_id=user_id,
-                                                message=text)
+    def sendMessageToDialog(self, user_id, text, sticker_id=0):
+        if sticker_id != 0:
+            self.vk_session.get_api().messages.send(user_id=user_id,
+                                                    sticker_id=sticker_id)
+        else:
+            self.vk_session.get_api().messages.send(user_id=user_id,
+                                                    message=text)
 
-    def sendMessageToChat(self, chat_id, text):
-        self.vk_session.get_api().messages.send(chat_id=chat_id,
-                                                message=text)
+    def sendMessageToChat(self, chat_id, text, sticker_id=0):
+        if sticker_id != 0:
+            self.vk_session.get_api().messages.send(chat_id=chat_id,
+                                                    sticker_id=sticker_id)
+        else:
+            self.vk_session.get_api().messages.send(chat_id=chat_id,
+                                                    message=text)
+
+
 
     def getUserById(self, userId):
         userfile = USERFILE.replace("*", str(userId))

@@ -60,6 +60,9 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="verticalScrollMode">
+        <enum>QAbstractItemView::ScrollPerPixel</enum>
+       </property>
       </widget>
      </item>
      <item>
